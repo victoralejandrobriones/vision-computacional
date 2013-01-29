@@ -1,14 +1,17 @@
 import Tkinter 
 import Image, ImageTk
+from sys import argv
 
-im = Image.open('cat.jpeg').convert("RGB")
+file = argv[1]
+
+im = Image.open(file).convert("RGB")
 (x,y) = im.size
 
 for i in range(x):
     for j in range(y):
         (r,g,b)=im.getpixel((i, j))
-        maximo = max((r,g,b))
-        im.putpixel((i,j), (maximo,maximo,maximo))
+        mini = min((r,g,b))
+        im.putpixel((i,j), (mini,mini,mini))
 ventana = Tkinter.Tk()
 im2 = ImageTk.PhotoImage(im)
 
