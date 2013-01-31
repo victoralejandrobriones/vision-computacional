@@ -60,7 +60,7 @@ if(argv[2]=="G"):
     grayscale()
 if(argv[2]=="B"):
     numero=0
-    while numero!=10:
+    while numero!=int(argv[3]):
         blur()
         numero+=1
 ventana = Tkinter.Tk()

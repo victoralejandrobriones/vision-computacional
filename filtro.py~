@@ -59,7 +59,10 @@ if(argv[2]=="BW"):
 if(argv[2]=="G"):
     grayscale()
 if(argv[2]=="B"):
-    blur()
+    numero=0
+    while numero!=10:
+        blur()
+        numero+=1
 ventana = Tkinter.Tk()
 im2 = ImageTk.PhotoImage(im)
 Tkinter.Label(ventana, image=im2).pack()
