@@ -8,6 +8,11 @@ im = Image.open(file).convert("RGB")
 original = im
 (x,y) = im.size
 
+def resize(size):
+    for i in range(x):
+        for j in range(y):
+            
+
 def b_and_w(scale):
     for i in range(x):
         for j in range(y):
