@@ -12,12 +12,12 @@ def b_and_w(scale):
     for i in range(x):
         for j in range(y):
             (r,g,b)=original.getpixel((i, j))
-            mini = max((r,g,b))
-            if(mini<scale):
-                mini = 0
+            bw = (r+g+b)/3
+            if(bw<scale):
+                bw = 0
             else:
-                mini = 255
-            im.putpixel((i,j), (mini,mini,mini))
+                bw = 255
+            im.putpixel((i,j), (bw,bw,bw))
 
 def grayscale(tipo):
     for i in range(x):
