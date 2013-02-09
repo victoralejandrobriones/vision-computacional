@@ -6,8 +6,68 @@ import math
 file = argv[1]
 
 im = Image.open(file).convert("RGB")
-original = im
+original = Image.open(file).convert("RGB")
+grayscaleim = Image.open(file).convert("RGB")
 (x,y) = im.size
+
+def convolucion(kerneltype, theta):
+    grayscale("prom")
+    kernel=[[0,1,0],[1,0,1],[0,1,0]]
+    if kerneltype == "PREW":
+        if theta == 0:
+            kernel=[[-1,1,1],[-1,-2,1],[-1,1,1]]
+        if theta == 45:
+            kernel=[[1,1,1],[-1,-2,1],[-1,-1,1]]
+    if kerneltype == "KIR":
+        if theta == 0:
+            kernel=[[-3,-3,5],[-3,0,5],[-3,-3,5]]
+        if theta == 45:
+            kernel=[[-3,5,5],[-3,0,5],[-3,-3,-3]]
+    if kerneltype == "ROBIN3":
+        if theta == 0:
+            kernel=[[-1,0,1],[-1,0,1],[-1,0,1]]
+        if theta == 45:
+            kernel=[[1,1,1],[-1,-2,1],[-1,-1,1]]
+    if kerneltype == "ROBIN5":
+        if theta == 0:
+            kernel=[[-1,0,1],[-2,0,2],[-1,0,1]]
+        if theta == 45:
+            kernel=[[0,1,2],[-1,0,1],[-2,-1,0]]
+    for i in range(x):
+        for j in range(y):
+            prom = [[0,0,0],[0,0,0],[0,0,0]]
+            pixel=grayscaleim.getpixel((i, j))[0]
+            if(i-1>=0):
+                prom[0][1]=grayscaleim.getpixel((i-1, j))[0]
+                prom[1][1]=grayscaleim.getpixel((i, j))[0]
+                if(j-1>0):
+                    prom[0][0]=grayscaleim.getpixel((i-1 ,j-1))[0]
+                    prom[1][0]=grayscaleim.getpixel((i, j-1))[0]
+                    if(i+1<x):
+                        prom[2][0]=grayscaleim.getpixel((i+1, j-1))[0]
+                        prom[2][1]=grayscaleim.getpixel((i+1, j))[0]
+                        if(j+1<y):
+                            prom[0][2]=grayscaleim.getpixel((i-1, j+1))[0]
+                            prom[1][2]=grayscaleim.getpixel((i, j+1))[0]
+                            prom[2][2]=grayscaleim.getpixel((i+1, j+1))[0]
+                        else:
+                            prom[0][2]=0
+                            prom[1][2]=0
+                            prom[2][2]=0
+                    else:
+                        prom[2][0]=0
+                        prom[2][1]=0
+                else:
+                    prom[0][0]=0
+                    prom[1][0]=0
+            else:
+                prom[0][1]=0
+                prom[1][1]=0
+            resultado=0
+            for a in range(len(prom)):
+                for b in range(len(prom[a])):
+                    resultado+=(prom[a][b]*kernel[a][b])
+            im.putpixel((i,j),(resultado, resultado, resultado))
 
 def b_and_w(scale):
     grayscale("prom")
@@ -21,6 +81,7 @@ def b_and_w(scale):
             im.putpixel((i,j), (pixel,pixel,pixel))
 
 def grayscale(tipo):
+    grayscaleim = original
     for i in range(x):
         for j in range(y):
             (r,g,b)=original.getpixel((i, j))
@@ -36,18 +97,19 @@ def grayscale(tipo):
                 gray = b
             if tipo == "prom":
                 gray = (r+g+b)/3
-            im.putpixel((i,j), (gray,gray,gray))
+            grayscaleim.putpixel((i,j), (gray,gray,gray))
+    return grayscaleim
 
 def blur(maxiter, normalizado):
     grayscale("prom")
     iter = 0
     while iter < maxiter:
-        print "Iteracion: ", iter
+        print "Iteracion: ", iter+1
         for i in range(x):
             for j in range(y):
                 prom = []
                 k=0
-                pixel=im.getpixel((i, j))[0]
+                pixel=grayscaleim.getpixel((i, j))[0]
                 if(i-1>=0):
                     prom.append(im.getpixel((i-1, j))[0])
                     k+=1
@@ -71,9 +133,9 @@ def blur(maxiter, normalizado):
         iter+=1
 
 def normalizado(iter, umbral):
-    blur(iter, True)
+    im = grayscale("prom")
+    blur(iter*1.5, False)
     lista = []
-    origlista = []
     for i in range(x):
         for j in range(y):
             lista.append(im.getpixel((i,j)))
@@ -83,11 +145,13 @@ def normalizado(iter, umbral):
     prop=256/rr
     for i in range(x):
         for j in range(y):
-            (r,g,b)=original.getpixel((i,j))
-            pix = int(math.floor((((r+g+b)/3)-minimo)*prop))
+            (r,g,b)=im.getpixel((i,j))
+            pix = int(math.floor((r-minimo)*prop))
             im.putpixel((i,j),(pix,pix,pix))
     b_and_w(umbral)
-     
+    blur(iter, True)
+    im = b_and_w(umbral)
+
 def color_blur(maxiter):
     iter = 0
     while iter < maxiter:
@@ -154,9 +218,16 @@ def color_inv():
             (r,g,b)=original.getpixel((i,j))
             im.putpixel((i,j),(255-r,255-g,255-b))
 
+if(argv[2]=="CON" or argv[2]=="con"):
+    if(len(argv)==5):
+        convolucion(argv[3], int(argv[4]))
+        im.save("CON_"+file)
+    else:
+        print "Introduzca el tipo de matriz (PREW, KIR, ROBIN3, ROBN5) y theta (0 o 45)"
 if(argv[2]=="INV" or argv[2]=="inv"):
-        color_inv()
-        im.save("INV_"+file)
+    color_inv()
+    im.save("INV_"+file)
+
 if(argv[2]=="GC" or argv[2]=="gc"):
     if(len(argv)==4):
         getcolor(argv[3])
