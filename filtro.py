@@ -38,9 +38,9 @@ def convolucion(kerneltype, theta):
         for j in range(y):
             prom = [[0,0,0],[0,0,0],[0,0,0]]
             pixel=grayscaleim.getpixel((i, j))[0]
+            prom[1][1]=grayscaleim.getpixel((i, j))[0]
             if(i-1>=0):
                 prom[0][1]=grayscaleim.getpixel((i-1, j))[0]
-                prom[1][1]=grayscaleim.getpixel((i, j))[0]
                 if(j-1>0):
                     prom[0][0]=grayscaleim.getpixel((i-1 ,j-1))[0]
                     prom[1][0]=grayscaleim.getpixel((i, j-1))[0]
@@ -63,7 +63,6 @@ def convolucion(kerneltype, theta):
                     prom[1][0]=0
             else:
                 prom[0][1]=0
-                prom[1][1]=0
             resultado=0
             for a in range(len(prom)):
                 for b in range(len(prom[a])):
