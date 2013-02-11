@@ -39,30 +39,30 @@ def convolucion(kerneltype, theta):
             prom = [[0,0,0],[0,0,0],[0,0,0]]
             pixel=grayscaleim.getpixel((i, j))[0]
             prom[1][1]=grayscaleim.getpixel((i, j))[0]
-            if(i-1>=0):
+            try:
                 prom[0][1]=grayscaleim.getpixel((i-1, j))[0]
-                if(j-1>0):
-                    prom[0][0]=grayscaleim.getpixel((i-1 ,j-1))[0]
-                    prom[1][0]=grayscaleim.getpixel((i, j-1))[0]
-                    if(i+1<x):
-                        prom[2][0]=grayscaleim.getpixel((i+1, j-1))[0]
-                        prom[2][1]=grayscaleim.getpixel((i+1, j))[0]
-                        if(j+1<y):
-                            prom[0][2]=grayscaleim.getpixel((i-1, j+1))[0]
-                            prom[1][2]=grayscaleim.getpixel((i, j+1))[0]
-                            prom[2][2]=grayscaleim.getpixel((i+1, j+1))[0]
-                        else:
-                            prom[0][2]=0
-                            prom[1][2]=0
-                            prom[2][2]=0
-                    else:
-                        prom[2][0]=0
-                        prom[2][1]=0
-                else:
-                    prom[0][0]=0
-                    prom[1][0]=0
-            else:
-                prom[0][1]=0
+            except:
+                prom[0][1]=grayscaleim.getpixel((i, j))[0]
+            try:
+                prom[0][0]=grayscaleim.getpixel((i-1 ,j-1))[0]
+                prom[1][0]=grayscaleim.getpixel((i, j-1))[0]
+            except:
+                prom[0][0]=grayscaleim.getpixel((i, j))[0]
+                prom[1][0]=grayscaleim.getpixel((i, j))[0]
+            try:
+                prom[2][0]=grayscaleim.getpixel((i+1, j-1))[0]
+                prom[2][1]=grayscaleim.getpixel((i+1, j))[0]
+            except:
+                prom[2][0]=grayscaleim.getpixel((i, j))[0]
+                prom[2][1]=grayscaleim.getpixel((i, j))[0]
+            try:
+                prom[0][2]=grayscaleim.getpixel((i-1, j+1))[0]
+                prom[1][2]=grayscaleim.getpixel((i, j+1))[0]
+                prom[2][2]=grayscaleim.getpixel((i+1, j+1))[0]
+            except:
+                prom[0][2]=grayscaleim.getpixel((i, j))[0]
+                prom[1][2]=grayscaleim.getpixel((i, j))[0]
+                prom[2][2]=grayscaleim.getpixel((i, j))[0]
             resultado=0
             for a in range(len(prom)):
                 for b in range(len(prom[a])):
