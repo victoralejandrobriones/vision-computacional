@@ -2,6 +2,7 @@ import Tkinter
 import Image, ImageTk
 from sys import argv
 import math
+import random
 
 file = argv[1]
 
@@ -216,6 +217,88 @@ def color_inv():
         for j in range(y):
             (r,g,b)=original.getpixel((i,j))
             im.putpixel((i,j),(255-r,255-g,255-b))
+
+def sal_pim(prop, sal):
+    negros = 0
+    blancos = 0
+    for i in range(x):
+        for j in range(y):
+            if prop >= random.random():
+                numero = random.random()
+                if sal >= numero:
+                    blancos+=1
+                    pim = random.randint(230, 255)
+                    im.putpixel((i,j),(pim,pim,pim))
+                elif sal <= numero:
+                    negros+=1
+                    pim = random.randint(0, 30)
+                    im.putpixel((i,j),(pim,pim,pim))
+    time.sleep(4)
+
+def quitar_sal_pim(negros):
+    iter = 0
+    for i in range(x):
+        for j in range(y):
+            promr = []
+            promg = []
+            promb = []
+            k=0
+            (r,g,b)=original.getpixel((i, j))
+            if(i-1>=0):
+                (rn,gn,bn)=original.getpixel((i-1, j))
+                promr.append(rn)
+                promg.append(gn)
+                promb.append(bn)
+                k+=1
+            if(i+1<x):
+                (rs,gs,bs)=original.getpixel((i+1, j))
+                promr.append(rs)
+                promg.append(gs)
+                promb.append(bs)
+                k+=1
+            if(j+1<y):
+                (re,ge,be)=original.getpixel((i, j+1))
+                promr.append(re)
+                promg.append(ge)
+                promb.append(be)
+                k+=1
+            if(j-1>=0):
+                (ro,go,bo)=original.getpixel((i, j-1))
+                promr.append(ro)
+                promg.append(go)
+                promb.append(bo)
+                k+=1
+            promedior = 0
+            promediog = 0
+            promediob = 0
+            for valor in promr:
+                promedior+=valor
+            for valor in promg:
+                promediog+=valor
+            for valor in promb:
+                promediob+=valor
+            promedior=promedior/k
+            promediog=promediog/k
+            promediob=promediob/k
+            if not negros:
+                if ((r) >= 230 and (g) >= 230 and (b ) >= 230):
+                    iter+=1
+                    im.putpixel((i,j), (promedior,promediog,promediob))
+            if negros:
+                if ((r) <= 30 and (g) <= 30 and (b) <= 30):
+                    iter+=1
+                    im.putpixel((i,j), (promedior,promediog,promediob))
+
+
+if(argv[2]=="SP" or argv[2]=="sp"):
+    if(len(argv)==5):
+        sal_pim(float(argv[3]), float(argv[4]))
+        im.save("SP_"+file)
+        quitar_sal_pim(float(True)
+        quitar_sal_pim(float(False)
+        im.save("QUITAR_SP_"+file)
+    else:
+        print "Introduzca la proporcion de la imagen, la proporcion de sal y el rango para quitar la sal y pimienta."
 
 if(argv[2]=="CON" or argv[2]=="con"):
     if(len(argv)==5):
