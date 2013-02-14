@@ -294,8 +294,8 @@ if(argv[2]=="SP" or argv[2]=="sp"):
     if(len(argv)==5):
         sal_pim(float(argv[3]), float(argv[4]))
         im.save("SP_"+file)
-        quitar_sal_pim(float(True)
-        quitar_sal_pim(float(False)
+        quitar_sal_pim(float(True))
+        quitar_sal_pim(float(False))
         im.save("QUITAR_SP_"+file)
     else:
         print "Introduzca la proporcion de la imagen, la proporcion de sal y el rango para quitar la sal y pimienta."
