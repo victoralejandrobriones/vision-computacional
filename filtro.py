@@ -296,12 +296,28 @@ def bfs(pixel):
     (r,g,b)=im.getpixel(pixel)
     color = r #Suponiendo que la imagen esta en blanco y negro.
     for x,y in lista:
-        for i in range(x-1, x+2):
-            for j in range(y-1, y+2):
+        for i in range(x-1, x+1):
+            for j in range(y-1, y+1):
                 if i >= 0 and j >= 0 and i < w and j < h:
                     if im.getpixel((i,j))==(r,g,b):
                         lista.append((i,j))
-                        im.putpixel((i,j), (255,0,0))                        
+                        im.putpixel((i,j), (255,0,0))
+                    
+                    if im.getpixel((i-1,j))==(r,g,b):
+                        lista.append((i-1,j))
+                        im.putpixel((i-1,j), (255,0,0))
+                    
+                    if im.getpixel((i,j-1))==(r,g,b):
+                        lista.append((i,j-1))
+                        im.putpixel((i,j-1), (255,0,0))
+                    
+                    if im.getpixel((i+1,j))==(r,g,b):
+                        lista.append((i+1,j))
+                        im.putpixel((i+1,j), (255,0,0))
+                    
+                    if im.getpixel((i,j+1))==(r,g,b):
+                        lista.append((i,j+1))
+                        im.putpixel((i,j+1), (255,0,0))                      
 
 if(argv[2]=="BFS" or argv[2]=="bfs"):
     if(len(argv)==5):
