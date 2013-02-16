@@ -289,6 +289,26 @@ def quitar_sal_pim(negros):
                     iter+=1
                     im.putpixel((i,j), (promedior,promediog,promediob))
 
+def bfs(pixel):
+    (w,h)=im.size
+    lista = []
+    lista.append(pixel)
+    (r,g,b)=im.getpixel(pixel)
+    color = r #Suponiendo que la imagen esta en blanco y negro.
+    for x,y in lista:
+        for i in range(x-2, x+2):
+            for j in range(y-2, y+2):
+                if i >= 0 and j >= 0 and i < w and j < h:
+                    if im.getpixel((i,j))==(r,g,b):
+                        lista.append((i,j))
+                        im.putpixel((i,j), (255,0,0))                        
+
+if(argv[2]=="BFS" or argv[2]=="bfs"):
+    if(len(argv)==5):
+        bfs((int(argv[3]), int(argv[4])))
+        im.save("BFS_"+file)
+    else:
+        print "Introduzca la posicion 'X' y 'Y'"
 
 if(argv[2]=="SP" or argv[2]=="sp"):
     if(len(argv)==5):
@@ -306,45 +326,53 @@ if(argv[2]=="CON" or argv[2]=="con"):
         im.save("CON_"+file)
     else:
         print "Introduzca el tipo de matriz (PREW, KIR, ROBIN3, ROBN5) y theta (0 o 45)"
+
 if(argv[2]=="INV" or argv[2]=="inv"):
         color_inv()
         im.save("INV_"+file)
+
 if(argv[2]=="GC" or argv[2]=="gc"):
     if(len(argv)==4):
         getcolor(argv[3])
         im.save("GC_"+file)
     else:
         print "Introduzca 'r', 'g' o 'b' segun el color que desee extraer."
+
 if(argv[2]=="BW" or argv[2]=="bw"):
     if(len(argv)==4):
         b_and_w(int(argv[3]))
         im.save("BW_"+file)
     else:
         print "Introduzca la escala de blanco y negro como parametro."
+
 if(argv[2]=="N" or argv[2]=="n"):
     if(len(argv)==5):
         normalizado(int(argv[3]), int(argv[4]))
         im.save("N_"+file)
     else:
         print "Introduzca el numero de iteraciones y el umbral."
+
 if(argv[2]=="G" or argv[2]=="g"):
     if(len(argv)==4):
         grayscale(argv[3])
         im.save("G_"+file)
     else:
         print "Introduzca el tipo de escala de gris (min, max, r, g, b, prom)."
+
 if(argv[2]=="B" or argv[2]=="b"):
     if(len(argv)==4):
         blur(int(argv[3]), False)
         im.save("B_"+file)
     else:
         print "Introduzca el numero de iteraciones de blur como parametro."
+
 if(argv[2]=="CB" or argv[2]=="cb"):
     if(len(argv)==4):
         color_blur(int(argv[3]))
         im.save("CB_"+file)
     else:
         print "Introduzca el numero de iteraciones de blur como parametro."
+
 ventana = Tkinter.Tk()
 im2 = ImageTk.PhotoImage(im)
 Tkinter.Label(ventana, image=im2).pack()
