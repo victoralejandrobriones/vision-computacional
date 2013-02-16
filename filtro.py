@@ -296,8 +296,8 @@ def bfs(pixel):
     (r,g,b)=im.getpixel(pixel)
     color = r #Suponiendo que la imagen esta en blanco y negro.
     for x,y in lista:
-        for i in range(x-2, x+2):
-            for j in range(y-2, y+2):
+        for i in range(x-1, x+2):
+            for j in range(y-1, y+2):
                 if i >= 0 and j >= 0 and i < w and j < h:
                     if im.getpixel((i,j))==(r,g,b):
                         lista.append((i,j))
