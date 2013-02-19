@@ -1,5 +1,5 @@
 import Tkinter
-import Image, ImageTk
+import Image, ImageTk, ImageDraw, ImageFont
 from sys import argv
 import math
 import random
@@ -289,40 +289,129 @@ def quitar_sal_pim(negros):
                     iter+=1
                     im.putpixel((i,j), (promedior,promediog,promediob))
 
-def bfs(pixel):
+def dfs(pixel):
+    k = 0
     (w,h)=im.size
     lista = []
     lista.append(pixel)
     (r,g,b)=im.getpixel(pixel)
     color = r #Suponiendo que la imagen esta en blanco y negro.
     for x,y in lista:
-        for i in range(x-1, x+1):
-            for j in range(y-1, y+1):
+        for i in range(x-1, x+2):
+            for j in range(y-1, y+2):
                 if i >= 0 and j >= 0 and i < w and j < h:
                     if im.getpixel((i,j))==(r,g,b):
+                        print r,g,b
                         lista.append((i,j))
-                        im.putpixel((i,j), (255,0,0))
-                    
-                    if im.getpixel((i-1,j))==(r,g,b):
-                        lista.append((i-1,j))
-                        im.putpixel((i-1,j), (255,0,0))
-                    
-                    if im.getpixel((i,j-1))==(r,g,b):
-                        lista.append((i,j-1))
-                        im.putpixel((i,j-1), (255,0,0))
-                    
-                    if im.getpixel((i+1,j))==(r,g,b):
-                        lista.append((i+1,j))
-                        im.putpixel((i+1,j), (255,0,0))
-                    
-                    if im.getpixel((i,j+1))==(r,g,b):
-                        lista.append((i,j+1))
-                        im.putpixel((i,j+1), (255,0,0))                      
+                        im.putpixel((i,j), (255,0,0))                        
+                        print k
+                        im.save(str(k)+".png")
+                        k+=1
+                
+
+
+def bfs(pixel, imagen, pintura):
+    k=0
+    (w,h)=imagen.size
+    lista = []
+    lista.append(pixel)
+    (r,g,b)=imagen.getpixel(pixel)
+    color = r #Suponiendo que la imagen esta en blanco y negro.
+    for x,y in lista:
+        for i in range(x, x+1):
+            for j in range(y, y+1):
+                if i >= 0 and j >= 0 and i < w and j < h:
+                    if imagen.getpixel((i,j))==(r,g,b):
+                        lista.append((i,j))
+                        imagen.putpixel((i,j), pintura)
+                        #im.save(str(k)+".png")
+                        k+=1
+                    try:
+                        if imagen.getpixel((i-1,j))==(r,g,b):
+                            lista.append((i-1,j))
+                            imagen.putpixel((i-1,j), pintura)
+                            #im.save(str(k)+".png")
+                            k+=1
+                    except:
+                        None
+                    try:
+                        if imagen.getpixel((i,j-1))==(r,g,b):
+                            lista.append((i,j-1))
+                            imagen.putpixel((i,j-1), pintura)
+                            #im.save(str(k)+".png")
+                            k+=1
+                    except:
+                        None   
+                    try:
+                        if imagen.getpixel((i+1,j))==(r,g,b):
+                            lista.append((i+1,j))
+                            imagen.putpixel((i+1,j), pintura)
+                            #im.save(str(k)+".png")
+                            k+=1
+                    except:
+                        None
+                    try:
+                        if imagen.getpixel((i,j+1))==(r,g,b):
+                            lista.append((i,j+1))
+                            imagen.putpixel((i,j+1), pintura) 
+                            #im.save(str(k)+".png")
+                            k+=1
+                    except:
+                        None
+    return lista
+
+def objetos():
+    pintura = [(255,0,0),(0,255,0),(0,0,255),(255,255,0),(0,255,255),(255,0,255),(255,127,0),(0,255,127),(127,0,255),(255,0,127),(127,255,0),(0,127,255),(255,127,127),(127,255,127),(127,127,255),(127,0,0),(127,127,0),(127,0,127),(0,127,0),(0,0,127)]
+    nueva = Image.open(file).convert("RGB")
+    objs = []
+    centroides = []
+    count = 0
+    for i in range(x):
+        for j in range(y):
+            if nueva.getpixel((i,j)) != (255,0,0):
+                objs.append(bfs((i,j), nueva, (255,0,0)))
+                count+=1
+    
+    for obj in objs:
+        xobj = []
+        yobj = []
+        for coord in obj:
+            xobj.append(coord[0])
+            yobj.append(coord[1])
+        centroides.append(((sum(xobj)/len(xobj)), (sum(yobj)/len(yobj))))
+    k=0
+    tam=[]
+    for i in objs:
+        tam.append(len(i)-1)
+    ind = tam.index(max(tam))
+    bfs(objs[ind][0], im, (127,127,127))
+
+    for i in objs:
+        if i[0] != objs[ind][0]:
+            bfs(i[0], im, pintura[k])
+        k+=1
+        if k == 20:
+            k = 0
+        print len(i)-1, "pixeles en el objeto."
+    
+    print sum(tam), "pixeles en la imagen."
+    print count, "objetos encontrados."
+    draw = ImageDraw.Draw(im)
+    font = ImageFont.truetype("/System/Library/Fonts/AppleGothic.ttf", 15)
+    count=1
+    for i in centroides:
+        draw.ellipse((i[0]-5, i[1]-5, i[0]+5, i[1]+5), fill=(0,0,0))
+        draw.text((i[0]+5, i[1]), str(count), (0,0,0), font=font)
+        count+=1
+
+
+if(argv[2]=="OBJ" or argv[2]=="obj"):
+    objetos()
+    im.save("OBJ_"+file)
 
 if(argv[2]=="BFS" or argv[2]=="bfs"):
     if(len(argv)==5):
         bfs((int(argv[3]), int(argv[4])))
-        im.save("BFS_"+file)
     else:
         print "Introduzca la posicion 'X' y 'Y'"
 
