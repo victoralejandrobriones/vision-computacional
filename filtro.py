@@ -384,6 +384,44 @@ def objetos():
         count+=1
 
 
+def giro(c, h, e):
+    return cmp(0, (h[0] - c[0])*(e[1] - c[1]) - (e[0] - c[0])*(h[1] - c[1]))
+
+def jrv_mr(coords):
+    hull = [min(coords)]
+    i = 0
+    while True:
+        end = coords[0]
+        for coord in coords:
+            if end == hull[i] or giro(coord, hull[i], end) == -1:
+                end = coord
+        i+=1
+        print end
+        hull.append(end)
+        if end == hull[0]:
+            break
+    print hull
+    return hull
+
+def convexhull(im):
+    hulls = []
+    for i in range(x):
+        for j in range(y):
+            if im.getpixel((i,j)) == (255, 255, 255):
+                coords = bfs((i, j),im, (127,127,127))
+                hulls.append(jrv_mr(coords))
+    return hulls
+
+
+if(argv[2]=="CH" or argv[2]=="ch"):
+    im=dilation(im)
+    points = convexhull(im)
+    draw = ImageDraw.Draw(im)
+    for point in points:
+        draw.line(point, fill=255)
+    im.save("CH_"+file)
+
+
 if(argv[2]=="OBJ" or argv[2]=="obj"):
     objetos()
     im.save("OBJ_"+file)
