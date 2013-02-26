@@ -413,6 +413,58 @@ def convexhull(im):
     return hulls
 
 
+def lines(u):
+    gradx = convolucion("SOBEL", 0)
+    grady = convolucion("SOBEL", 90)
+    matriz = []
+    comb = {}
+    ang = []
+    for i in range(x):
+        lista = []
+        for j in range(y):
+            gx = gradx.getpixel((i,j))[0]
+            gy = grady.getpixel((i,j))[0]
+            theta = 0.0
+            if abs(gx) + abs(gy) <= 0.0:
+                theta = None
+            elif gx == 0 and gy == 255:
+                theta = 90
+            if theta is not None:
+                rho = abs((i) * math.cos(theta) + (j) * math.sin(theta))
+                if not theta in ang:  
+                    ang.append(theta)
+                if i > 0 and i < x-1 and j > 0 and j < y - 1:
+                    if (rho, theta) in comb:
+                        comb[(rho, theta)] += 1
+                    else:
+                        comb[(rho, theta)] = 1
+                lista.append((rho, theta))
+            else:
+                lista.append((None, None))
+        matriz.append(lista)
+    comb = sorted(comb.items(), key=lambda k: k[1], reverse = True)
+    frec = {}
+    n = int(math.ceil(len(comb) * u))
+    for i in range(n):
+        (rho, theta) = comb[i][0]
+        frec[(rho, theta)] = comb[1]
+    for i in range(x):
+        for j in range(y):
+            if i > 0 and j > 0 and i < x and j < y:
+                rho, theta = matriz[i][j]
+                if (rho, theta) in frec:
+                    if theta == 0:
+                        im.putpixel((i,j),(255,0,0))
+                    elif theta == 90:
+                        im.putpixel((i,j),(0,255,0))
+
+if(argv[2]=="LN" or argv[2]=="ln"):
+    if(len(argv)==4):
+        lines(float(argv[3]))
+        im.save("LN_"+file)
+    else:
+        print "Introduzca el umbral."
+
 if(argv[2]=="CH" or argv[2]=="ch"):
     im=dilation(im)
     points = convexhull(im)
