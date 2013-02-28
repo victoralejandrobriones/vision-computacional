@@ -15,6 +15,11 @@ def convolucion(kerneltype, theta):
     imagen = Image.open(file).convert("RGB")
     grayscale("prom")
     kernel=[[0,1,0],[1,0,1],[0,1,0]]
+    if kerneltype == "SOBEL":
+        if theta == 0:
+            kernel=[[-1,-1,-1],[2,2,2],[-1,-1,-1]]
+        if theta == 90:
+            kernel=[[-1,2,-1],[-1,2,-1],[-1,2,-1]]
     if kerneltype == "PREW":
         if theta == 0:
             kernel=[[-1,1,1],[-1,-2,1],[-1,1,1]]
@@ -68,7 +73,8 @@ def convolucion(kerneltype, theta):
             for a in range(len(prom)):
                 for b in range(len(prom[a])):
                     resultado+=(prom[a][b]*kernel[a][b])
-            im.putpixel((i,j),(resultado, resultado, resultado))
+            imagen.putpixel((i,j),(resultado, resultado, resultado))
+    return imagen
 
 def b_and_w(scale):
     grayscale("prom")
@@ -289,6 +295,40 @@ def quitar_sal_pim(negros):
                     iter+=1
                     im.putpixel((i,j), (promedior,promediog,promediob))
 
+def dilation(image, iter):
+    k=0
+    while k<iter:
+        for i in range(x):
+            for j in range(y):
+                if image.getpixel((i,j))==(255,255,255):
+                    try:
+                        image.putpixel((i-1,j),(255,255,255))
+                    except:
+                        pass
+        for i in reversed(range(x)):
+            for j in reversed(range(y)):
+                if image.getpixel((i,j))==(255,255,255):
+                    try:
+                        image.putpixel((i+1,j),(255,255,255))
+                    except:
+                        pass
+        for i in range(x):
+            for j in range(y):
+                if image.getpixel((i,j))==(255,255,255):
+                    try:
+                        image.putpixel((i,j-1),(255,255,255))
+                    except:
+                        pass
+        for i in reversed(range(x)):
+            for j in reversed(range(y)):
+                if image.getpixel((i,j))==(255,255,255):
+                    try:
+                        image.putpixel((i,j+1),(255,255,255))
+                    except:
+                        pass
+        k+=1
+    return image
+
 def bfs(pixel, imagen, pintura):
     k=0
     (w,h)=imagen.size
@@ -339,9 +379,10 @@ def bfs(pixel, imagen, pintura):
                         None
     return lista
 
-def objetos():
+def objetos(nueva):
     pintura = [(255,0,0),(0,255,0),(0,0,255),(255,255,0),(0,255,255),(255,0,255),(255,127,0),(0,255,127),(127,0,255),(255,0,127),(127,255,0),(0,127,255),(255,127,127),(127,255,127),(127,127,255),(127,0,0),(127,127,0),(127,0,127),(0,127,0),(0,0,127)]
-    nueva = Image.open(file).convert("RGB")
+    if nueva == None:
+        nueva = Image.open(file).convert("RGB")
     objs = []
     centroides = []
     count = 0
@@ -414,6 +455,8 @@ def convexhull(im):
 
 
 def lines(u):
+    pintura = [(0,255,0),(0,0,255),(255,255,0),(0,255,255),(255,0,255),(255,127,0),(0,255,127),(127,0,255),(255,0,127),(127,255,0),(0,127,255),(255,127,127),(127,255,127),(127,127,255),(127,0,0),(127,127,0),(127,0,127),(0,127,0),(0,0,127)]
+    nueva = Image.new("RGB", (x,y), (255,0,0))
     gradx = convolucion("SOBEL", 0)
     grady = convolucion("SOBEL", 90)
     matriz = []
@@ -425,10 +468,17 @@ def lines(u):
             gx = gradx.getpixel((i,j))[0]
             gy = grady.getpixel((i,j))[0]
             theta = 0.0
-            if abs(gx) + abs(gy) <= 0.0:
+            """if abs(gx) + abs(gy) <= 0.0:
                 theta = None
-            elif gx == 0 and gy == 255:
-                theta = 90
+                elif gx == 0 and gy == 255:
+                theta = 90"""
+            try:
+                if gx == 255 and gy == 0:
+                    theta = math.atan(gy/gx)
+                else:
+                    theta = math.atan(gx/gy)
+            except:
+                theta = None
             if theta is not None:
                 rho = abs((i) * math.cos(theta) + (j) * math.sin(theta))
                 if not theta in ang:  
@@ -445,18 +495,41 @@ def lines(u):
     comb = sorted(comb.items(), key=lambda k: k[1], reverse = True)
     frec = {}
     n = int(math.ceil(len(comb) * u))
+    rholist = []
     for i in range(n):
         (rho, theta) = comb[i][0]
+        if theta not in rholist:
+            rholist.append(theta)
         frec[(rho, theta)] = comb[1]
     for i in range(x):
         for j in range(y):
             if i > 0 and j > 0 and i < x and j < y:
                 rho, theta = matriz[i][j]
                 if (rho, theta) in frec:
-                    if theta == 0:
-                        im.putpixel((i,j),(255,0,0))
-                    elif theta == 90:
-                        im.putpixel((i,j),(0,255,0))
+                    if theta !=0:
+                        nueva.putpixel((i,j),(255,255,255))
+                    else:
+                        nueva.putpixel((i,j),(0,0,0))
+    nueva.save("diagonal.png")
+    nueva = dilation(nueva,1)
+    count = 0
+    objs = []
+    k=0
+    for i in range(x):
+        for j in range(y):
+            if nueva.getpixel((i,j)) == (255,255,255) or nueva.getpixel((i,j)) == (0,0,0):
+                objs.append(bfs((i,j), nueva, pintura[k]))
+                count+=1
+                k+=1
+                if k == 19:
+                    k = 0
+    for i in range(x):
+        for j in range(y):
+            if i > 0 and j > 0 and i < x and j < y:
+                rho, theta = matriz[i][j]
+                if (rho, theta) in frec:
+                    im.putpixel((i,j),nueva.getpixel((i,j)))
+    nueva.save("output.png")
 
 if(argv[2]=="LN" or argv[2]=="ln"):
     if(len(argv)==4):
@@ -466,7 +539,7 @@ if(argv[2]=="LN" or argv[2]=="ln"):
         print "Introduzca el umbral."
 
 if(argv[2]=="CH" or argv[2]=="ch"):
-    im=dilation(im)
+    im=dilation(im, 1)
     points = convexhull(im)
     draw = ImageDraw.Draw(im)
     for point in points:
