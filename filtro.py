@@ -384,14 +384,61 @@ def objetos(nueva):
     if nueva == None:
         nueva = Image.open(file).convert("RGB")
     objs = []
+    bordes = []
     centroides = []
     count = 0
     for i in range(x):
         for j in range(y):
-            if nueva.getpixel((i,j)) != (255,0,0):
+            if nueva.getpixel((i,j)) != (255,0,0) and nueva.getpixel((i,j)) != (255,255,255):
                 objs.append(bfs((i,j), nueva, (255,0,0)))
                 count+=1
+            if nueva.getpixel((i,j)) == (255,255,255):
+                bordes.append(bfs((i,j), nueva, (255,0,0)))
+    print "Total de bordes:",len(bordes)
+    centro = []
+    for borde in bordes:
+        xobj = []
+        yobj = []
+        for coord in borde:
+            xobj.append(coord[0])
+            yobj.append(coord[1])
+        centro.append(((sum(xobj)/len(xobj)), (sum(yobj)/len(yobj))))
+    area = []
+    nueva = Image.open(file).convert("RGB")
+    for i in centro:
+        area.append(bfs(i,nueva,(255,0,0)))
+    nueva.save("rojos.png")
+    radios = []
+    for obj in area:
+        radios.append(math.sqrt(len(obj)/3.1416))
+    for radio in radios:
+        print radio
+    nueva = Image.new('RGB', (x, y), (0, 0, 0))
+    draw = ImageDraw.Draw(nueva)
+    for i in range(len(radios)):
+        draw.ellipse((centro[i][0]-math.floor(radios[i]), centro[i][1]-math.floor(radios[i]), centro[i][0]+math.floor(radios[i]), centro[i][1]+math.floor(radios[i])), fill=(255,0,255))
     
+    circleareas=[]
+    nueva.save("areas.png")
+    nueva = Image.open("areas.png").convert("RGB")
+    for i in centro:
+        circleareas.append(bfs(i,nueva,(255,0,0)))
+    errores=[]
+    for i in range(len(circleareas)):
+        error = 0
+        for j in range(len(circleareas[i])):
+            if circleareas[i][j] not in area[i]:
+                error+=1
+        errores.append(error)
+    count = 0
+    circulos=[]
+    for error in errores:
+        print "Errores en objeto",centro[count],error
+        print ((error*1.0)/(len(area[count])*1.0))*100.0
+        print ((error*1.0)/(len(area[count])*1.0))*100.0 <=7.0
+        if ((error*1.0)/(len(area[count])*1.0))*100.0 <=6.0:
+            circulos.append(centro[count])
+        count+=1
     for obj in objs:
         xobj = []
         yobj = []
@@ -405,7 +452,7 @@ def objetos(nueva):
         tam.append(len(i)-1)
     ind = tam.index(max(tam))
     bfs(objs[ind][0], im, (127,127,127))
-
+    
     for i in objs:
         if i[0] != objs[ind][0]:
             bfs(i[0], im, pintura[k])
@@ -423,7 +470,8 @@ def objetos(nueva):
         draw.ellipse((i[0]-5, i[1]-5, i[0]+5, i[1]+5), fill=(0,0,0))
         draw.text((i[0]+5, i[1]), str(count), (0,0,0), font=font)
         count+=1
-
+    for i in circulos:
+        draw.text((i[0]+10, i[1]-15), "Circulo", (0,0,0), font=font)
 
 def giro(c, h, e):
     return cmp(0, (h[0] - c[0])*(e[1] - c[1]) - (e[0] - c[0])*(h[1] - c[1]))
@@ -548,7 +596,7 @@ if(argv[2]=="CH" or argv[2]=="ch"):
 
 
 if(argv[2]=="OBJ" or argv[2]=="obj"):
-    objetos()
+    objetos(None)
     im.save("OBJ_"+file)
 
 if(argv[2]=="BFS" or argv[2]=="bfs"):
