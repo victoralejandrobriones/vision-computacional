@@ -612,10 +612,10 @@ def elipses(nueva):
     count = 0
     circulos=[]
     for error in errores:
-        print "Errores en objeto",centro[count],error
-        print ((error*1.0)/(len(area[count])*1.0))*100.0
-        print ((error*1.0)/(len(area[count])*1.0))*100.0 <=10.0
         if ((error*1.0)/(len(area[count])*1.0))*100.0 <=10.0:
+            print "Elipse en:",centro[count]
+            print "Radio menor:", min(distancias[count])
+            print "Radio mayor:", max(distancias[count])
             circulos.append(centro[count])
         count+=1
 
@@ -652,17 +652,18 @@ def elipses(nueva):
         count+=1
 
     for i in circulos:
+        draw.ellipse((i[0]-5, i[1]-5, i[0]+5, i[1]+5), fill=(0,0,255))
         draw.text((i[0]+10, i[1]-15), "Elipse", (0,0,0), font=font)
 
     i = 0
     for distancia in distancias:
-        draw.text(bordes[i][distancia.index(min(distancia))], "*", (0,0,0), font=font)
-        draw.text(bordes[i][distancia.index(max(distancia))], "*", (0,0,0), font=font)
+        draw.text(bordes[i][distancia.index(min(distancia))], "*", (255,0,255), font=font)
+        draw.text(bordes[i][distancia.index(max(distancia))], "*", (255,0,255), font=font)
         i+=1
 
     for i in range(len(cini)):
-        draw.text(cini[i], "*", (0,0,0), font=font)
-        draw.text(cfin[i], "*", (0,0,0), font=font)
+        draw.text(cini[i], "*", (255,0,0), font=font)
+        draw.text(cfin[i], "*", (255,0,0), font=font)
 
 def giro(c, h, e):
     return cmp(0, (h[0] - c[0])*(e[1] - c[1]) - (e[0] - c[0])*(h[1] - c[1]))
