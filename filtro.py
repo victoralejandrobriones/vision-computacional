@@ -379,7 +379,53 @@ def bfs(pixel, imagen, pintura):
                         None
     return lista
 
+
 def objetos(nueva):
+    pintura = [(255,0,0),(0,255,0),(0,0,255),(255,255,0),(0,255,255),(255,0,255),(255,127,0),(0,255,127),(127,0,255),(255,0,127),(127,255,0),(0,127,255),(255,127,127),(127,255,127),(127,127,255),(127,0,0),(127,127,0),(127,0,127),(0,127,0),(0,0,127)]
+    if nueva == None:
+        nueva = Image.open(file).convert("RGB")
+    objs = []
+    centroides = []
+    count = 0
+    for i in range(x):
+        for j in range(y):
+            if nueva.getpixel((i,j)) != (255,0,0) and nueva.getpixel((i,j)) != (255,255,255):
+                objs.append(bfs((i,j), nueva, (255,0,0)))
+                count+=1
+    
+    for obj in objs:
+        xobj = []
+        yobj = []
+        for coord in obj:
+            xobj.append(coord[0])
+            yobj.append(coord[1])
+        centroides.append(((sum(xobj)/len(xobj)), (sum(yobj)/len(yobj))))
+    k=0
+    tam=[]
+    for i in objs:
+        tam.append(len(i)-1)
+    ind = tam.index(max(tam))
+    bfs(objs[ind][0], im, (127,127,127))
+    
+    for i in objs:
+        if i[0] != objs[ind][0]:
+            bfs(i[0], im, pintura[k])
+        k+=1
+        if k == 20:
+            k = 0
+        print len(i)-1, "pixeles en el objeto."
+    
+    print sum(tam), "pixeles en la imagen."
+    print count, "objetos encontrados."
+    draw = ImageDraw.Draw(im)
+    font = ImageFont.truetype("/System/Library/Fonts/AppleGothic.ttf", 15)
+    count=1
+    for i in centroides:
+        draw.ellipse((i[0]-5, i[1]-5, i[0]+5, i[1]+5), fill=(0,0,0))
+        draw.text((i[0]+5, i[1]), str(count), (0,0,0), font=font)
+        count+=1
+
+def circulos(nueva):
     pintura = [(255,0,0),(0,255,0),(0,0,255),(255,255,0),(0,255,255),(255,0,255),(255,127,0),(0,255,127),(127,0,255),(255,0,127),(127,255,0),(0,127,255),(255,127,127),(127,255,127),(127,127,255),(127,0,0),(127,127,0),(127,0,127),(0,127,0),(0,0,127)]
     if nueva == None:
         nueva = Image.open(file).convert("RGB")
@@ -403,6 +449,15 @@ def objetos(nueva):
             xobj.append(coord[0])
             yobj.append(coord[1])
         centro.append(((sum(xobj)/len(xobj)), (sum(yobj)/len(yobj))))
+    
+    distancias = []
+    i = 0
+    for borde in bordes:
+        distancia = []
+        for coord in borde:
+            distancia.append(math.sqrt(((coord[0]-centro[i][0])**2)+((coord[1]-centro[i][1])**2)))
+        distancias.append(distancia)
+        i+=1
     area = []
     nueva = Image.open(file).convert("RGB")
     for i in centro:
@@ -472,6 +527,142 @@ def objetos(nueva):
         count+=1
     for i in circulos:
         draw.text((i[0]+10, i[1]-15), "Circulo", (0,0,0), font=font)
+    i = 0
+    for distancia in distancias:
+        draw.text(bordes[i][distancia.index(min(distancia))], "*", (0,0,0), font=font)
+        draw.text(bordes[i][distancia.index(max(distancia))], "*", (0,0,0), font=font)
+        i+=1
+
+def elipses(nueva):
+    pintura = [(255,0,0),(0,255,0),(0,0,255),(255,255,0),(0,255,255),(255,0,255),(255,127,0),(0,255,127),(127,0,255),(255,0,127),(127,255,0),(0,127,255),(255,127,127),(127,255,127),(127,127,255),(127,0,0),(127,127,0),(127,0,127),(0,127,0),(0,0,127)]
+    if nueva == None:
+        nueva = Image.open(file).convert("RGB")
+    objs = []
+    bordes = []
+    centroides = []
+    count = 0
+    for i in range(x):
+        for j in range(y):
+            if nueva.getpixel((i,j)) != (255,0,0) and nueva.getpixel((i,j)) != (255,255,255):
+                objs.append(bfs((i,j), nueva, (255,0,0)))
+                count+=1
+            if nueva.getpixel((i,j)) == (255,255,255):
+                bordes.append(bfs((i,j), nueva, (255,0,0)))
+    print "Total de bordes:",len(bordes)
+    centro = []
+    for borde in bordes:
+        xobj = []
+        yobj = []
+        for coord in borde:
+            xobj.append(coord[0])
+            yobj.append(coord[1])
+        centro.append(((sum(xobj)/len(xobj)), (sum(yobj)/len(yobj))))
+    distancias = []
+    i = 0
+    for borde in bordes:
+        distancia = []
+        for coord in borde:
+            distancia.append(math.sqrt(((coord[0]-centro[i][0])**2)+((coord[1]-centro[i][1])**2)))
+        distancias.append(distancia)
+        i+=1
+    
+    cini = []
+    cfin = []
+
+    for i in range(len(centro)):
+        print min(distancias[i]), bordes[i][distancias[i].index(min(distancias[i]))],
+        print max(distancias[i]), bordes[i][distancias[i].index(max(distancias[i]))],
+        print centro[i]
+        print bordes[i][distancias[i].index(min(distancias[i]))][0], centro[i][0]
+        if bordes[i][distancias[i].index(min(distancias[i]))][0] > centro[i][0]-10 and bordes[i][distancias[i].index(min(distancias[i]))][0] < centro[i][0]+10:
+            print "Horizontal"
+            cini.append((centro[i][0]-max(distancias[i]), centro[i][1]-min(distancias[i])))
+            cfin.append(((centro[i][0]+max(distancias[i])), (centro[i][1]+min(distancias[i]))))
+        else:
+            print "Vertical"
+            cini.append((centro[i][0]-min(distancias[i]), centro[i][1]-max(distancias[i])))
+            cfin.append(((centro[i][0]+min(distancias[i])), (centro[i][1]+max(distancias[i]))))
+
+    area = []
+    nueva = Image.open(file).convert("RGB")
+    for i in range(len(centro)):
+        #if i != 0:
+            area.append(bfs(centro[i],nueva,(255,0,0)))
+    nueva.save("rojos.png")
+    nueva = Image.new('RGB', (x, y), (0, 0, 0))
+    draw = ImageDraw.Draw(nueva)
+    for i in range(len(centro)):
+        #if i != 0:
+            draw.ellipse((cini[i][0],cini[i][1], cfin[i][0], cfin[i][1]), fill=(255,0,255))
+
+    circleareas=[]
+    nueva.save("areas.png")
+    nueva = Image.open("areas.png").convert("RGB")
+    for i in range(len(centro)):
+        #if i != 0:
+            circleareas.append(bfs(centro[i],nueva,(255,0,0)))
+    errores=[]
+    for i in range(len(circleareas)):
+        print i
+        error = 0
+        for j in range(len(circleareas[i])):
+            if circleareas[i][j] not in area[i]:
+                error+=1
+        errores.append(error)
+    count = 0
+    circulos=[]
+    for error in errores:
+        print "Errores en objeto",centro[count],error
+        print ((error*1.0)/(len(area[count])*1.0))*100.0
+        print ((error*1.0)/(len(area[count])*1.0))*100.0 <=10.0
+        if ((error*1.0)/(len(area[count])*1.0))*100.0 <=10.0:
+            circulos.append(centro[count])
+        count+=1
+
+    for obj in objs:
+        xobj = []
+        yobj = []
+        for coord in obj:
+            xobj.append(coord[0])
+            yobj.append(coord[1])
+        centroides.append(((sum(xobj)/len(xobj)), (sum(yobj)/len(yobj))))
+    k=0
+    tam=[]
+    for i in objs:
+        tam.append(len(i)-1)
+    ind = tam.index(max(tam))
+    bfs(objs[ind][0], im, (127,127,127))
+    
+    for i in objs:
+        if i[0] != objs[ind][0]:
+            bfs(i[0], im, pintura[k])
+        k+=1
+        if k == 20:
+            k = 0
+        print len(i)-1, "pixeles en el objeto."
+    
+    print sum(tam), "pixeles en la imagen."
+    print count, "objetos encontrados."
+    draw = ImageDraw.Draw(im)
+    font = ImageFont.truetype("/System/Library/Fonts/AppleGothic.ttf", 15)
+    count=1
+    for i in centroides:
+        draw.ellipse((i[0]-5, i[1]-5, i[0]+5, i[1]+5), fill=(0,0,0))
+        draw.text((i[0]+5, i[1]), str(count), (0,0,0), font=font)
+        count+=1
+
+    for i in circulos:
+        draw.text((i[0]+10, i[1]-15), "Elipse", (0,0,0), font=font)
+
+    i = 0
+    for distancia in distancias:
+        draw.text(bordes[i][distancia.index(min(distancia))], "*", (0,0,0), font=font)
+        draw.text(bordes[i][distancia.index(max(distancia))], "*", (0,0,0), font=font)
+        i+=1
+
+    for i in range(len(cini)):
+        draw.text(cini[i], "*", (0,0,0), font=font)
+        draw.text(cfin[i], "*", (0,0,0), font=font)
 
 def giro(c, h, e):
     return cmp(0, (h[0] - c[0])*(e[1] - c[1]) - (e[0] - c[0])*(h[1] - c[1]))
@@ -594,10 +785,25 @@ if(argv[2]=="CH" or argv[2]=="ch"):
         draw.line(point, fill=255)
     im.save("CH_"+file)
 
+if(argv[2]=="DIL" or argv[2]=="dil"):
+    if (len(argv)==4):
+        im=dilation(im, int(argv[3]))
+        im.save("DIL_"+file)
+    else:
+        print "Introduzca la cantidad de iteraciones de dilatacion"
 
 if(argv[2]=="OBJ" or argv[2]=="obj"):
     objetos(None)
     im.save("OBJ_"+file)
+
+if(argv[2]=="CIR" or argv[2]=="cir"):
+    circulos(None)
+    im.save("CIR_"+file)
+               
+               
+if(argv[2]=="ELI" or argv[2]=="eli"):
+    elipses(None)
+    im.save("ELI_"+file)
 
 if(argv[2]=="BFS" or argv[2]=="bfs"):
     if(len(argv)==5):
