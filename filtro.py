@@ -611,12 +611,22 @@ def elipses(nueva):
         errores.append(error)
     count = 0
     circulos=[]
+    diferencia = []
     for error in errores:
-        if ((error*1.0)/(len(area[count])*1.0))*100.0 <=10.0:
+        if ((error*1.0)/(len(area[count])*1.0))*100.0 <=15.0:
             print "Elipse en:",centro[count]
             print "Radio menor:", min(distancias[count])
             print "Radio mayor:", max(distancias[count])
+            print "Margen de error:", ((error*1.0)/(len(area[count])*1.0))*100.0
+            print "\n"
+            diferencia.append(max(distancias[count]) - min(distancias[count]))
             circulos.append(centro[count])
+        else:
+            print "NO Elipse en:",centro[count]
+            print "Radio menor:", min(distancias[count])
+            print "Radio mayor:", max(distancias[count])
+            print "Margen de error:",((error*1.0)/(len(area[count])*1.0))*100.0
+            print "\n"
         count+=1
 
     for obj in objs:
@@ -626,44 +636,36 @@ def elipses(nueva):
             xobj.append(coord[0])
             yobj.append(coord[1])
         centroides.append(((sum(xobj)/len(xobj)), (sum(yobj)/len(yobj))))
-    k=0
-    tam=[]
-    for i in objs:
-        tam.append(len(i)-1)
-    ind = tam.index(max(tam))
-    bfs(objs[ind][0], im, (127,127,127))
-    
-    for i in objs:
-        if i[0] != objs[ind][0]:
-            bfs(i[0], im, pintura[k])
-        k+=1
-        if k == 20:
-            k = 0
-        print len(i)-1, "pixeles en el objeto."
-    
-    print sum(tam), "pixeles en la imagen."
-    print count, "objetos encontrados."
+
     draw = ImageDraw.Draw(im)
     font = ImageFont.truetype("/System/Library/Fonts/AppleGothic.ttf", 15)
-    count=1
-    for i in centroides:
+
+    count = 0
+    bfs(objs[0][0], im, (127,127,127))
+    print "Area total:",im.size[0]*im.size[1]
+    print ""
+    for i in circulos:
+        a = bfs(i, im, pintura[count])
         draw.ellipse((i[0]-5, i[1]-5, i[0]+5, i[1]+5), fill=(0,0,0))
-        draw.text((i[0]+5, i[1]), str(count), (0,0,0), font=font)
+        if diferencia[count] > 10:
+            draw.text((i[0]+10, i[1]-15), "Elipse "+str(count), (0,0,0), font=font)
+        else:
+            draw.text((i[0]+10, i[1]-15), "Elipse "+str(count)+" (Circulo)", (0,0,0), font=font)
+        print "Elipse:", count
+        print "Area ocupada:",len(a)
+        print "Porcentaje:","{0:.2f}".format(float(len(a))/(im.size[0]*im.size[1])*100)+" %"
+        print ""
         count+=1
 
-    for i in circulos:
-        draw.ellipse((i[0]-5, i[1]-5, i[0]+5, i[1]+5), fill=(0,0,255))
-        draw.text((i[0]+10, i[1]-15), "Elipse", (0,0,0), font=font)
+    #i = 0
+    #for distancia in distancias:
+        #draw.text(bordes[i][distancia.index(min(distancia))], "*", (255,0,255), font=font)
+        #draw.text(bordes[i][distancia.index(max(distancia))], "*", (255,0,255), font=font)
+        #i+=1
 
-    i = 0
-    for distancia in distancias:
-        draw.text(bordes[i][distancia.index(min(distancia))], "*", (255,0,255), font=font)
-        draw.text(bordes[i][distancia.index(max(distancia))], "*", (255,0,255), font=font)
-        i+=1
-
-    for i in range(len(cini)):
-        draw.text(cini[i], "*", (255,0,0), font=font)
-        draw.text(cfin[i], "*", (255,0,0), font=font)
+    #for i in range(len(cini)):
+        #draw.text(cini[i], "*", (255,0,0), font=font)
+        #draw.text(cfin[i], "*", (255,0,0), font=font)
 
 def giro(c, h, e):
     return cmp(0, (h[0] - c[0])*(e[1] - c[1]) - (e[0] - c[0])*(h[1] - c[1]))
