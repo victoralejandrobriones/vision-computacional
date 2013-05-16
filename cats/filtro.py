@@ -4,12 +4,296 @@ from sys import argv
 import math
 import random
 
+
+# Archivos de entrada necesarios para el funcionamiento correcto de toda la libreria.
+
 file = argv[1]
 
 im = Image.open(file).convert("RGB")
 grayscaleim = Image.open(file).convert("RGB")
 original = im
 (x,y) = im.size
+
+# Filtro mediano, se utiliza para quitar ruido a las imagenes, es especial para detectar 
+# esquinas o para descubrir puntos resaltantes en una imagen.
+
+def median_blur(maxiter, normalize = False):
+    imagen = Image.open(file).convert("RGB")
+    imagen = grayscale("prom",imagen)
+    iter = 0
+    while iter < maxiter:
+        
+        for i in range(x):
+            for j in range(y):
+                prom = []
+                k=1
+                pixel=imagen.getpixel((i, j))[0]
+                prom.append(im.getpixel((i, j))[0])
+                try:
+                    prom.append(im.getpixel((i-1, j))[0])
+                    k+=1
+                except:
+                    pass
+                try:
+                    prom.append(im.getpixel((i-1 ,j-1))[0])
+                    prom.append(im.getpixel((i, j-1))[0])
+                    k+=2
+                except:
+                    pass
+                try:
+                    prom.append(im.getpixel((i+1, j-1))[0])
+                    prom.append(im.getpixel((i+1, j))[0])
+                    k+=2
+                except:
+                    pass
+                try:
+                    prom.append(im.getpixel((i-1, j+1))[0])
+                    prom.append(im.getpixel((i, j+1))[0])
+                    prom.append(im.getpixel((i+1, j+1))[0])
+                    k+=3
+                except:
+                    pass
+                promedio = 0;
+                prom.sort()
+                promedio=prom[k/2]
+                if normalize:
+                    imagen.putpixel((i,j), (pixel-promedio,pixel-promedio,pixel-promedio))
+                else:
+                    im.putpixel((i,j), (promedio,promedio,promedio))
+        iter+=1
+
+# Filtro promedio, sirve para quitar ruido a la imagen, tambien es especial para 
+# resaltar contornos y facilita la deteccion de lineas.
+
+def blur(maxiter, normalizado = False):
+    iter = 0
+    while iter < maxiter:
+        for i in range(x):
+            for j in range(y):
+                prom = []
+                k=0
+                pixel=im.getpixel((i, j))[0]
+                if(i-1>=0):
+                    prom.append(im.getpixel((i-1, j))[0])
+                    k+=1
+                if(i+1<x):
+                    prom.append(im.getpixel((i+1, j))[0])
+                    k+=1
+                if(j+1<y):
+                    prom.append(im.getpixel((i, j+1))[0])
+                    k+=1
+                if(j-1>=0):
+                    prom.append(im.getpixel((i, j-1))[0])
+                    k+=1
+                promedio = 0;
+                for valor in prom:
+                    promedio+=valor
+                promedio = promedio/k
+                if normalizado:
+                    im.putpixel((i,j), (pixel-promedio,pixel-promedio,pixel-promedio))
+                else:
+                    im.putpixel((i,j), (promedio,promedio,promedio))            
+        iter+=1
+
+# Con esta funcion se detectan los contornos mediante el uso del filtro promedio.
+
+def normalizado(iter, umbral):
+    global im
+    im = grayscale("prom", im)
+    blur(iter*1.5, True)
+    lista = []
+    for i in range(x):
+        for j in range(y):
+            lista.append(im.getpixel((i,j)))
+    (minimo,bla,bla) = min(lista)
+    (maximo,bla,bla) = max(lista)
+    rr = maximo-minimo
+    prop=maximo-minimo
+    for i in range(x):
+        for j in range(y):
+            (r,g,b)=im.getpixel((i,j))
+            pix = int(math.floor((r-minimo)*prop))
+            im.putpixel((i,j),(pix,pix,pix))
+    b_and_w(umbral)
+    blur(iter, False)
+    b_and_w(umbral)
+
+# Funcion para dilatar los pixeles blancos, de esa manera los objetos negros
+# se separan para poder mapearse correctamente.
+
+def dilation(image, iter):
+    k=0
+    while k<iter:
+        for i in range(x):
+            for j in range(y):
+                if image.getpixel((i,j))==(255,255,255):
+                    try:
+                        image.putpixel((i-1,j),(255,255,255))
+                    except:
+                        pass
+        for i in reversed(range(x)):
+            for j in reversed(range(y)):
+                if image.getpixel((i,j))==(255,255,255):
+                    try:
+                        image.putpixel((i+1,j),(255,255,255))
+                    except:
+                        pass
+        for i in range(x):
+            for j in range(y):
+                if image.getpixel((i,j))==(255,255,255):
+                    try:
+                        image.putpixel((i,j-1),(255,255,255))
+                    except:
+                        pass
+        for i in reversed(range(x)):
+            for j in reversed(range(y)):
+                if image.getpixel((i,j))==(255,255,255):
+                    try:
+                        image.putpixel((i,j+1),(255,255,255))
+                    except:
+                        pass
+        k+=1
+    return image
+
+# BFS, sirve para encontrar objetos de un color especifico.
+
+def bfs(pixel, imagen, pintura):
+    k=0
+    (w,h)=imagen.size
+    lista = []
+    lista.append(pixel)
+    (r,g,b)=imagen.getpixel(pixel)
+    color = r #Suponiendo que la imagen esta en blanco y negro.
+    for x,y in lista:
+        for i in range(x, x+1):
+            for j in range(y, y+1):
+                if i >= 0 and j >= 0 and i < w and j < h:
+                    if imagen.getpixel((i,j))==(r,g,b):
+                        lista.append((i,j))
+                        imagen.putpixel((i,j), pintura)
+                        #im.save(str(k)+".png")
+                        k+=1
+                    try:
+                        if imagen.getpixel((i-1,j))==(r,g,b):
+                            lista.append((i-1,j))
+                            imagen.putpixel((i-1,j), pintura)
+                            #im.save(str(k)+".png")
+                            k+=1
+                    except:
+                        None
+                    try:
+                        if imagen.getpixel((i,j-1))==(r,g,b):
+                            lista.append((i,j-1))
+                            imagen.putpixel((i,j-1), pintura)
+                            #im.save(str(k)+".png")
+                            k+=1
+                    except:
+                        None   
+                    try:
+                        if imagen.getpixel((i+1,j))==(r,g,b):
+                            lista.append((i+1,j))
+                            imagen.putpixel((i+1,j), pintura)
+                            #im.save(str(k)+".png")
+                            k+=1
+                    except:
+                        None
+                    try:
+                        if imagen.getpixel((i,j+1))==(r,g,b):
+                            lista.append((i,j+1))
+                            imagen.putpixel((i,j+1), pintura) 
+                            #im.save(str(k)+".png")
+                            k+=1
+                    except:
+                        None
+    return lista
+
+# Funcion que devuelve una lista de los centros calculados de los objetos en una lista, tomados
+# de un BFS.
+
+def centros(objs):
+    centroides = []
+    for obj in objs:
+        xobj = []
+        yobj = []
+        for coord in obj:
+            xobj.append(coord[0])
+            yobj.append(coord[1])
+        centroides.append(((sum(xobj)/len(xobj)), (sum(yobj)/len(yobj))))
+    return centroides
+
+# Filtro para convertir una imagen a blanco y negro.
+
+def b_and_w(scale):
+    grayscale("prom",im)
+    for i in range(x):
+        for j in range(y):
+            pixel = im.getpixel((i,j))[0]
+            if(pixel<scale):
+                pixel = 0
+            else:
+                pixel = 255
+            im.putpixel((i,j), (pixel,pixel,pixel))
+
+# Filtro para convertir una imagen a escala de grices.
+
+def grayscale(tipo, im):
+    for i in range(x):
+        for j in range(y):
+            (r,g,b)=original.getpixel((i, j))
+            if tipo == "min":
+                gray = min((r,g,b))
+            if tipo == "max":
+                gray = max((r,g,b))
+            if tipo == "r":
+                gray = r
+            if tipo == "g":
+                gray = g
+            if tipo == "b":
+                gray = b
+            if tipo == "prom":
+                gray = (r+g+b)/3
+            im.putpixel((i,j), (gray,gray,gray))
+    return im
+
+# Calcula la distancia entre dos puntos.
+
+def distancia(p1, p2):
+    x1,y1 = p1
+    y2, x2 = p2
+    return math.sqrt( (x2 - x1)**2 + (y2 - y1)**2)
+
+# Si entre los parametros se encuentra el string "CAT" en la posicion 2, entonces se 
+# continua con el procesamiento para detectar rostros.
+
+if(argv[2]=="CAT"):
+    median_blur(1)
+    normalizado(1, 254)
+    im=dilation(im, 7)
+    lista = []
+    for i in range(x):
+        for j in range(y):
+            if im.getpixel((i,j)) != (255,255,255):
+                lista.append(bfs((i,j), im, (255,255,255)))
+    centro = centros(lista)
+    imagen = Image.open(file).convert("RGB")
+    draw = ImageDraw.Draw(imagen)
+    c = centros([centro])
+    suma = 0
+    for d in centro:
+        suma += distancia(c[0],(d[1],d[0]))
+    dist = 1.5*(suma/len(centro))
+    for elemento in c:
+        draw.rectangle((elemento[0]-dist, elemento[1]-dist,elemento[0]+dist, elemento[1]+dist), outline=(255,0,0))
+    imagen.save("CAT_"+file)
+    im = imagen
+
+###################################################################
+# A partir de aqui, ninguna funcion es utilizada para el proyecto #
+# pero se conservan como evidencia y para futuros trabajos        #
+###################################################################
+
+# Se aplican distintas matrices de convolucion.
+# (NO USADO)
 
 def convolucion(kerneltype, theta):
     imagen = Image.open(file).convert("RGB")
@@ -78,35 +362,8 @@ def convolucion(kerneltype, theta):
             imagen.putpixel((i,j),(resultado, resultado, resultado))
     return imagen
 
-def b_and_w(scale):
-    grayscale("prom",im)
-    for i in range(x):
-        for j in range(y):
-            pixel = im.getpixel((i,j))[0]
-            if(pixel<scale):
-                pixel = 0
-            else:
-                pixel = 255
-            im.putpixel((i,j), (pixel,pixel,pixel))
-
-def grayscale(tipo, im):
-    for i in range(x):
-        for j in range(y):
-            (r,g,b)=original.getpixel((i, j))
-            if tipo == "min":
-                gray = min((r,g,b))
-            if tipo == "max":
-                gray = max((r,g,b))
-            if tipo == "r":
-                gray = r
-            if tipo == "g":
-                gray = g
-            if tipo == "b":
-                gray = b
-            if tipo == "prom":
-                gray = (r+g+b)/3
-            im.putpixel((i,j), (gray,gray,gray))
-    return im
+# Dada una imagen con distintos objetos, retorna los puntos donde se encuentra cada objeto.
+# (NO USADO)
 
 def puntos(imagen):
     lista = []
@@ -115,105 +372,10 @@ def puntos(imagen):
             if imagen.getpixel((i,j))!=(0,255,0) and imagen.getpixel((i,j))!=(0,0,0):
                 lista.append(bfs((i,j), imagen, (0,255,0)))
     return lista
-
-def median_blur(maxiter, normalize = False):
-    imagen = Image.open(file).convert("RGB")
-    imagen = grayscale("prom",imagen)
-    iter = 0
-    while iter < maxiter:
-
-        for i in range(x):
-            for j in range(y):
-                prom = []
-                k=1
-                pixel=imagen.getpixel((i, j))[0]
-                prom.append(im.getpixel((i, j))[0])
-                try:
-                    prom.append(im.getpixel((i-1, j))[0])
-                    k+=1
-                except:
-                    pass
-                try:
-                    prom.append(im.getpixel((i-1 ,j-1))[0])
-                    prom.append(im.getpixel((i, j-1))[0])
-                    k+=2
-                except:
-                    pass
-                try:
-                    prom.append(im.getpixel((i+1, j-1))[0])
-                    prom.append(im.getpixel((i+1, j))[0])
-                    k+=2
-                except:
-                    pass
-                try:
-                    prom.append(im.getpixel((i-1, j+1))[0])
-                    prom.append(im.getpixel((i, j+1))[0])
-                    prom.append(im.getpixel((i+1, j+1))[0])
-                    k+=3
-                except:
-                    pass
-                promedio = 0;
-                prom.sort()
-                promedio=prom[k/2]
-                if normalize:
-                    imagen.putpixel((i,j), (pixel-promedio,pixel-promedio,pixel-promedio))
-                else:
-                    im.putpixel((i,j), (promedio,promedio,promedio))
-        iter+=1
-    
-
-def blur(maxiter, normalizado = False):
-    iter = 0
-    while iter < maxiter:
-        for i in range(x):
-            for j in range(y):
-                prom = []
-                k=0
-                pixel=im.getpixel((i, j))[0]
-                if(i-1>=0):
-                    prom.append(im.getpixel((i-1, j))[0])
-                    k+=1
-                if(i+1<x):
-                    prom.append(im.getpixel((i+1, j))[0])
-                    k+=1
-                if(j+1<y):
-                    prom.append(im.getpixel((i, j+1))[0])
-                    k+=1
-                if(j-1>=0):
-                    prom.append(im.getpixel((i, j-1))[0])
-                    k+=1
-                promedio = 0;
-                for valor in prom:
-                    promedio+=valor
-                promedio = promedio/k
-                if normalizado:
-                    im.putpixel((i,j), (pixel-promedio,pixel-promedio,pixel-promedio))
-                else:
-                    im.putpixel((i,j), (promedio,promedio,promedio))            
-        iter+=1
-
-def normalizado(iter, umbral):
-    global im
-    im = grayscale("prom", im)
-    blur(iter*1.5, True)
-    lista = []
-    for i in range(x):
-        for j in range(y):
-            lista.append(im.getpixel((i,j)))
-    (minimo,bla,bla) = min(lista)
-    (maximo,bla,bla) = max(lista)
-    rr = maximo-minimo
-    prop=maximo-minimo
-    for i in range(x):
-        for j in range(y):
-            (r,g,b)=im.getpixel((i,j))
-            pix = int(math.floor((r-minimo)*prop))
-            im.putpixel((i,j),(pix,pix,pix))
-    b_and_w(umbral)
-    blur(iter, False)
-    b_and_w(umbral)
-
      
+# Filtro promedio en imagenes de color.
+# (NO USADO)
+
 def color_blur(maxiter):
     iter = 0
     while iter < maxiter:
@@ -263,6 +425,9 @@ def color_blur(maxiter):
                 im.putpixel((i,j), (promedior,promediog,promediob))
         iter+=1
 
+# Filtro para obtener un canal de color de una imagen.
+# (NO USADO)
+
 def getcolor(color):
     for i in range(x):
         for j in range(y):
@@ -274,11 +439,17 @@ def getcolor(color):
             if(color=="b" or color == "B"):
                 im.putpixel((i,j),(0,0,b))
 
+# Filtro para invertir colores.
+# (NO USADO)
+
 def color_inv():
     for i in range(x):
         for j in range(y):
             (r,g,b)=original.getpixel((i,j))
             im.putpixel((i,j),(255-r,255-g,255-b))
+
+# Funcion para agregar "sal" y "pimienta"
+# (NO USADO)
 
 def sal_pim(prop, sal):
     negros = 0
@@ -296,6 +467,9 @@ def sal_pim(prop, sal):
                     pim = random.randint(0, 30)
                     im.putpixel((i,j),(pim,pim,pim))
     time.sleep(4)
+
+# Una vez la imagen tenga "sal" y "pimienta", esta funcion sirve para removerla.
+# (NO USADO)
 
 def quitar_sal_pim(negros):
     iter = 0
@@ -351,16 +525,8 @@ def quitar_sal_pim(negros):
                     iter+=1
                     im.putpixel((i,j), (promedior,promediog,promediob))
 
-def centros(objs):
-    centroides = []
-    for obj in objs:
-        xobj = []
-        yobj = []
-        for coord in obj:
-            xobj.append(coord[0])
-            yobj.append(coord[1])
-        centroides.append(((sum(xobj)/len(xobj)), (sum(yobj)/len(yobj))))
-    return centroides
+# Deteccion de agujeros mediante el uso de histogramas.
+# (NO USADO)
 
 def hole_detection(n):
     imagen = Image.open(file).convert("RGB")
@@ -409,6 +575,9 @@ def hole_detection(n):
     imagen2.save("Test.png")
     imagen.save("HL_"+file)
     return imagen2
+
+# Deteccion de agujeros.
+# (NO USADO)
 
 def holes(image):
     matriz = []
@@ -469,90 +638,8 @@ def holes(image):
     image.save("H.png")
     return (picosh, picosv)
 
-def dilation(image, iter):
-    k=0
-    while k<iter:
-        for i in range(x):
-            for j in range(y):
-                if image.getpixel((i,j))==(255,255,255):
-                    try:
-                        image.putpixel((i-1,j),(255,255,255))
-                    except:
-                        pass
-        for i in reversed(range(x)):
-            for j in reversed(range(y)):
-                if image.getpixel((i,j))==(255,255,255):
-                    try:
-                        image.putpixel((i+1,j),(255,255,255))
-                    except:
-                        pass
-        for i in range(x):
-            for j in range(y):
-                if image.getpixel((i,j))==(255,255,255):
-                    try:
-                        image.putpixel((i,j-1),(255,255,255))
-                    except:
-                        pass
-        for i in reversed(range(x)):
-            for j in reversed(range(y)):
-                if image.getpixel((i,j))==(255,255,255):
-                    try:
-                        image.putpixel((i,j+1),(255,255,255))
-                    except:
-                        pass
-        k+=1
-    return image
-
-def bfs(pixel, imagen, pintura):
-    k=0
-    (w,h)=imagen.size
-    lista = []
-    lista.append(pixel)
-    (r,g,b)=imagen.getpixel(pixel)
-    color = r #Suponiendo que la imagen esta en blanco y negro.
-    for x,y in lista:
-        for i in range(x, x+1):
-            for j in range(y, y+1):
-                if i >= 0 and j >= 0 and i < w and j < h:
-                    if imagen.getpixel((i,j))==(r,g,b):
-                        lista.append((i,j))
-                        imagen.putpixel((i,j), pintura)
-                        #im.save(str(k)+".png")
-                        k+=1
-                    try:
-                        if imagen.getpixel((i-1,j))==(r,g,b):
-                            lista.append((i-1,j))
-                            imagen.putpixel((i-1,j), pintura)
-                            #im.save(str(k)+".png")
-                            k+=1
-                    except:
-                        None
-                    try:
-                        if imagen.getpixel((i,j-1))==(r,g,b):
-                            lista.append((i,j-1))
-                            imagen.putpixel((i,j-1), pintura)
-                            #im.save(str(k)+".png")
-                            k+=1
-                    except:
-                        None   
-                    try:
-                        if imagen.getpixel((i+1,j))==(r,g,b):
-                            lista.append((i+1,j))
-                            imagen.putpixel((i+1,j), pintura)
-                            #im.save(str(k)+".png")
-                            k+=1
-                    except:
-                        None
-                    try:
-                        if imagen.getpixel((i,j+1))==(r,g,b):
-                            lista.append((i,j+1))
-                            imagen.putpixel((i,j+1), pintura) 
-                            #im.save(str(k)+".png")
-                            k+=1
-                    except:
-                        None
-    return lista
-
+# Deteccion de objetos mediante BFS
+# (NO USADO)
 
 def objetos(nueva):
     pintura = [(255,0,0),(0,255,0),(0,0,255),(255,255,0),(0,255,255),(255,0,255),(255,127,0),(0,255,127),(127,0,255),(255,0,127),(127,255,0),(0,127,255),(255,127,127),(127,255,127),(127,127,255),(127,0,0),(127,127,0),(127,0,127),(0,127,0),(0,0,127)]
@@ -598,6 +685,9 @@ def objetos(nueva):
         draw.ellipse((i[0]-5, i[1]-5, i[0]+5, i[1]+5), fill=(0,0,0))
         draw.text((i[0]+5, i[1]), str(count), (0,0,0), font=font)
         count+=1
+
+# Deteccion de circulos.
+# (NO USADO)
 
 def circulos(nueva):
     pintura = [(255,0,0),(0,255,0),(0,0,255),(255,255,0),(0,255,255),(255,0,255),(255,127,0),(0,255,127),(127,0,255),(255,0,127),(127,255,0),(0,127,255),(255,127,127),(127,255,127),(127,127,255),(127,0,0),(127,127,0),(127,0,127),(0,127,0),(0,0,127)]
@@ -706,6 +796,9 @@ def circulos(nueva):
         draw.text(bordes[i][distancia.index(min(distancia))], "*", (0,0,0), font=font)
         draw.text(bordes[i][distancia.index(max(distancia))], "*", (0,0,0), font=font)
         i+=1
+
+# Deteccion de elipses.
+# (NO USADO)
 
 def elipses(nueva):
     pintura = [(255,0,0),(0,255,0),(0,0,255),(255,255,0),(0,255,255),(255,0,255),(255,127,0),(0,255,127),(127,0,255),(255,0,127),(127,255,0),(0,127,255),(255,127,127),(127,255,127),(127,127,255),(127,0,0),(127,127,0),(127,0,127),(0,127,0),(0,0,127)]
@@ -841,8 +934,14 @@ def elipses(nueva):
         #draw.text(cini[i], "*", (255,0,0), font=font)
         #draw.text(cfin[i], "*", (255,0,0), font=font)
 
+# Funcion para calcular el giro en convex hull.
+# (NO USADO)
+
 def giro(c, h, e):
     return cmp(0, (h[0] - c[0])*(e[1] - c[1]) - (e[0] - c[0])*(h[1] - c[1]))
+
+# Funcion para calcular un hull en una posicion dada.
+# (NO USADO)
 
 def jrv_mr(coords):
     hull = [min(coords)]
@@ -860,6 +959,9 @@ def jrv_mr(coords):
     print hull
     return hull
 
+# Convex Hhll
+# (NO USADO)
+
 def convexhull(im):
     hulls = []
     for i in range(x):
@@ -869,6 +971,8 @@ def convexhull(im):
                 hulls.append(jrv_mr(coords))
     return hulls
 
+# Deteccion de lineas.
+# (NO USADO)
 
 def lines(u):
     pintura = [(0,255,0),(0,0,255),(255,255,0),(0,255,255),(255,0,255),(255,127,0),(0,255,127),(127,0,255),(255,0,127),(127,255,0),(0,127,255),(255,127,127),(127,255,127),(127,127,255),(127,0,0),(127,127,0),(127,0,127),(0,127,0),(0,0,127)]
@@ -951,11 +1055,6 @@ def lines(u):
     print len(listilla)
     nueva.save("output.png")
 
-def distancia(p1, p2):
-    x1,y1 = p1
-    y2, x2 = p2
-    return math.sqrt( (x2 - x1)**2 + (y2 - y1)**2)
-
 if(argv[2]=="LN" or argv[2]=="ln"):
     if(len(argv)==4):
         lines(float(argv[3]))
@@ -1006,28 +1105,6 @@ if(argv[2]=="SP" or argv[2]=="sp"):
         quitar_sal_pim(float(True))
         quitar_sal_pim(float(False))
         im.save("QUITAR_SP_"+file)
-
-if(argv[2]=="CAT"):
-    median_blur(1)
-    normalizado(1, 254)
-    im=dilation(im, 7)
-    lista = []
-    for i in range(x):
-	for j in range(y):
-	    if im.getpixel((i,j)) != (255,255,255):
-		lista.append(bfs((i,j), im, (255,255,255)))
-    centro = centros(lista)
-    imagen = Image.open(file).convert("RGB")
-    draw = ImageDraw.Draw(imagen)
-    c = centros([centro])
-    suma = 0
-    for d in centro:
-	suma += distancia(c[0],(d[1],d[0]))
-    dist = 1.5*(suma/len(centro))
-    for elemento in c:
-        draw.rectangle((elemento[0]-dist, elemento[1]-dist,elemento[0]+dist, elemento[1]+dist), outline=(255,0,0))
-    imagen.save("CAT_"+file)
-    im = imagen
 
 if(argv[2]=="CON" or argv[2]=="con"):
     if(len(argv)==5):
