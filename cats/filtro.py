@@ -121,7 +121,7 @@ def median_blur(maxiter, normalize = False):
     imagen = grayscale("prom",imagen)
     iter = 0
     while iter < maxiter:
-        print "Iteracion: ", iter+1
+
         for i in range(x):
             for j in range(y):
                 prom = []
@@ -165,7 +165,6 @@ def median_blur(maxiter, normalize = False):
 def blur(maxiter, normalizado = False):
     iter = 0
     while iter < maxiter:
-        print "Iteracion: ", iter+1
         for i in range(x):
             for j in range(y):
                 prom = []
@@ -197,7 +196,6 @@ def normalizado(iter, umbral):
     global im
     im = grayscale("prom", im)
     blur(iter*1.5, True)
-    im.save("algo1.png")
     lista = []
     for i in range(x):
         for j in range(y):
@@ -214,7 +212,7 @@ def normalizado(iter, umbral):
     b_and_w(umbral)
     blur(iter, False)
     b_and_w(umbral)
-    im.save("algo.png")
+
      
 def color_blur(maxiter):
     iter = 0
@@ -953,6 +951,11 @@ def lines(u):
     print len(listilla)
     nueva.save("output.png")
 
+def distancia(p1, p2):
+    x1,y1 = p1
+    y2, x2 = p2
+    return math.sqrt( (x2 - x1)**2 + (y2 - y1)**2)
+
 if(argv[2]=="LN" or argv[2]=="ln"):
     if(len(argv)==4):
         lines(float(argv[3]))
@@ -998,14 +1001,33 @@ if(argv[2]=="BFS" or argv[2]=="bfs"):
         print "Introduzca la posicion 'X' y 'Y'"
 
 if(argv[2]=="SP" or argv[2]=="sp"):
-    if(len(argv)==3):
         #sal_pim(float(argv[3]), float(argv[4]))
         #im.save("SP_"+file)
         quitar_sal_pim(float(True))
         quitar_sal_pim(float(False))
         im.save("QUITAR_SP_"+file)
-    else:
-        print "Introduzca la proporcion de la imagen, la proporcion de sal y el rango para quitar la sal y pimienta."
+
+if(argv[2]=="CAT"):
+    median_blur(1)
+    normalizado(1, 254)
+    im=dilation(im, 7)
+    lista = []
+    for i in range(x):
+	for j in range(y):
+	    if im.getpixel((i,j)) != (255,255,255):
+		lista.append(bfs((i,j), im, (255,255,255)))
+    centro = centros(lista)
+    imagen = Image.open(file).convert("RGB")
+    draw = ImageDraw.Draw(imagen)
+    c = centros([centro])
+    suma = 0
+    for d in centro:
+	suma += distancia(c[0],(d[1],d[0]))
+    dist = 1.5*(suma/len(centro))
+    for elemento in c:
+        draw.rectangle((elemento[0]-dist, elemento[1]-dist,elemento[0]+dist, elemento[1]+dist), outline=(255,0,0))
+    imagen.save("CAT_"+file)
+    im = imagen
 
 if(argv[2]=="CON" or argv[2]=="con"):
     if(len(argv)==5):
