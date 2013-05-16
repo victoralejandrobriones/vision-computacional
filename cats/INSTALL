@@ -1,0 +1,17 @@
+Para poder usar correctamente este software es necesario tener instaladas las siguientes librerias:
+
+Python 2.x (2.7 de preferencia)
+
+- En la mayoría de las distribuciones Linux y en Mac OS X ya viene instalado pero siempre se puede actualizar descargando una versión desde su página:
+  http://www.python.org/download
+
+PIL (Pyton Imaging Library)
+
+- Desde la página:
+  http://www.pythonware.com/products/pil
+
+- Desde terminal (Ubintu):
+  "sudo apt-get install python-imaging"
+  
+  También se necesitan las librerias JPEG y ZLIB para soporte de archivos jpeg y png:
+  "sudo apt-get install libjpeg libjpeg-dev libfreetype6 libfreetype6-dev zlib1g-dev"
